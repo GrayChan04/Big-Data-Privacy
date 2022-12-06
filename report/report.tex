@@ -1,0 +1,124 @@
+\documentclass[conference]{IEEEtran}
+\IEEEoverridecommandlockouts
+% The preceding line is only needed to identify funding in the first footnote. If that is unneeded, please comment it out.
+\usepackage{cite}
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{algorithmic}
+\usepackage{graphicx}
+\usepackage{textcomp}
+\usepackage{xcolor}
+\def\BibTeX{{\rm B\kern-.05em{\sc i\kern-.025em b}\kern-.08em
+    T\kern-.1667em\lower.7ex\hbox{E}\kern-.125emX}}
+\begin{document}
+
+\title{Private Protection in Generative Models\\
+\thanks{University of Science and Technology of China}
+}
+
+\author{\IEEEauthorblockN{Haihan Gao}
+\IEEEauthorblockA{\textit{SA22011017} \\}
+\and
+\IEEEauthorblockN{Xiaolu Chen}
+\IEEEauthorblockA{\textit{SA22221005} \\}
+\and
+\IEEEauthorblockN{Li Zhang}
+\IEEEauthorblockA{\textit{SA22221064} \\}
+}
+
+\maketitle
+
+\begin{abstract}
+The advance of technology boosting the appearance of a big amount of data leads to the wide application of artificial intelligent service based on the machine learning. However, some of the data used for training models is sensitive which may cause serious problems to not only individuals but also organizations event the national governments, so it is necessary to get the balance between the utility and the privacy of data. To provide the solution for privacy protection, a lot of explorations has been done one of which is the differential privacy, the basic tool for privacy preserving having works in many scenarios since its proposal. Specially in recent years, it is combined withe another tool, the generative models whose main purpose is to generate the fake data from the distribution of real data so that it can replaced the real privacy data in practice. There are a great deal of work based on the differential privacy and the generative adversarial network(GAN) rather than variational autoencoder(VAE), and this inspires this report to proposal a solution for privacy protection based on a variant of VAE with differential privacy by performing noise addition. Through the experiments on MNIST dataset, the proposal model is proved that it can produce available fake data as well as keep the privacy of original data.
+\end{abstract}
+
+\begin{IEEEkeywords}
+CVAE, privacy preserving, generative model, differential privacy, Variational Autoencoder
+\end{IEEEkeywords}
+
+
+\section{Introduction}
+With the quick pace of technology, people enter the information age where data is synonymous with wealth. Everyday tremendous data is being produced by multiple network devices and its number is increasing with the growth of the scale of network service and applications. The collection of data usually discovers the latent relationship between things, so it prompts the development of machine learning making better use of data. Especially with the increasing computation power and algorithms, data of big amount also gives significant help to machine learning, for more and more data can be taken the advantage of. However, serious privacy concern is aroused at the same time the machine learning builds powerful models for the data fed to the models may be individual sensitive which is often regarded as privacy.
+
+In spite of the difficulty to perform privacy preserving caused by the non-existent accurate definition of privacy at present, people pay a lot of attention to keep it from leakage. For convenience of following statement, here the wide accepted concept about privacy is shown that privacy data denotes the sensitive information which its owner is reluctant to offer to public for it is highly closely related to one's identity and interest, and this also reflects the potential harm of privacy leakage. The privacy is closely related with not only the individual interest but also national security and social stability that letting out privacy information may cause negative impact on people's normal life because of hazard of the identity information under being misused in an illegal way leading to harm to the interest of it owners, as well as endanger social order and national sovereignty because of the possible occurrence of malicious groups who can collect and analyse sensitive data as a way to obtain state confidential information which pose a threat to the rule of the governments by disturbing the social order and rebelling against national rule if disclosed and taken use of a weapon. 
+
+Indeed, it is actually that the seriousness of privacy problem gives alerts to individuals and organizations to think highly of the privacy security. Nowadays, laws and regulations are published and constantly improved to put constrain on the individuals and enterprises to use private data, such as Privacy Act of US, GDPR of EU and Personal Information Protection Law of China. It is noted that depending merely on the mandatory provisions of laws to perform privacy protection is not enough yet and the situation that people worrying about their privacy data may still hesitate when asked to offer their data for formal use might lead to the other extreme that data for developing machine learning are becoming less and less. In order to balance the utility and privacy of data, technology is another way ought to be turned to.\cite{b1} 
+
+According to the difference between the application details, privacy protection techniques can be divided into four groups that are data generalization, noise disturbance, data encryption and fake data generating. Among them, the differential privacy is the representative work of noise disturbance and even the most popular privacy preserving method which has had great influence in the field of privacy protection since its proposal. Besides, generative models might be one of the most promising technique for privacy preserving owing to the rapid advancement of machine learning which has large development opportunity. As a result, a great number of impressive works focusing on the combination of the differential privacy and generative models have been done, but most of them are based on the generative adversarial network(GAN) and the exploration in those based on the variational autoencoder(VAE) is after a fashion. Noting that, this work is proposed to combine the differential privacy and VAE to enrich in this field, providing more exploration inspiration. 
+
+The contributions of this report are as following: 
+
+1) a generative model based on CVAE, a variant of VAE, combined with noise addition to gradients during training is proposed to perform the differential privacy to generate fake data whose features is similar to the original ones but without privacy leakage when used; 
+
+2) through the result of the experiment on MNIST dataset, it is proved that the proposed model achieve the goal to keep the utility of generated data and also the effect of privacy protection is also measured with the result of privacy experiment.
+
+\section{Related work}
+The works about the generative models based on the differential privacy mechanism will be introduced in this section, and before that it is important know how the differential privacy works.
+
+\subsection{Differential Privacy}
+The differential privacy\cite{b2} describes the similar performance of a randomized algorithm on two similar dataset, and its formal definition is shown as following:
+\begin{equation}
+    Pr[M(D) \in S] \leq exp(\epsilon) Pr[M(D) \in S] + \delta,
+\end{equation}
+where $M$ is a randomized algorithm that map it domain to a discrete probability simplex which represents the probability distribution of a range and $S \subseteq range(M)$. $\epsilon$ is privacy budget consumed when dealing with queries. Smaller $\epsilon$ means better privacy protection, but corresponding noise added to data is bigger which may lead to the reduction of the data usability. $\delta$ is a relaxation term which is usually smaller than $1/|D|$ allowing little difference between the outputs of the algorithm working on two datasets. The above formula means that $M$ is $(\epsilon,\delta)-differential \quad privacy$ and when $\delta = 0$, it is said that $M$ is $\epsilon-differential \quad privacy$. It is noted that $D$ and $D'$ are neighbouring datasets whose difference defined as $l_1$ norm: $||D - D'||_1$ understood as the pieces of data is usually only one piece of data different.
+
+There are three key properties of the differential privacy: privacy post-processing, composability of privacy and group privacy. \cite{b3} 
+Privacy post-processing means that a algorithm following the diffrential privacy will not be affected by whatever post process applied on the result it computes and this leading to the property named composability of privacy that if all the components of a mechanism are following the differential private, then so is their composition. These two properties give the opportunity to differential privacy to be designed as a modular part of other algorithms. Different from them, group privacy indicates the privacy preserving reduction that the strength of the privacy guarantee drops linearly with the size of the group. Due to the key three properties, the composition of differential privacy mechanisms should be designed carefully to achieve higher privacy protection in different circumstances. 
+
+Some basic techniques are summarized by researchers, which are regarded as the basic building blocks for developing all other algorithms, and there are 1) the randomized response mechanism that the response is asked to answer the queries honestly at a probability or answer randomly by giving the specific answer at another probability; 2) the Laplace mechanism is to add the independent identically distributed random variables drawn from Laplace distribution into the answers themselves to the queries to hide the sensitivity of them influenced by the difference between two neighbouring dataset; 3) the Gauss mechanism perform the perturbation on the answers with the noise sampled from the Gauss distribution in the same way as the Laplace mechanism but with different measurement of the sensitivity of queries on two neighbouring dataset ; 4) the exponential mechanism perform interference on the probability distribution of answers by assigning different answers different probabilities which is higher when its corresponding output is more expected measured with the utility function introduced.
+
+Besides the basic differential privacy, its variant also developed to permits more flexibility and more practical significance. Both Rényi differential privacy\cite{b4} and zero-concentrated differential privacy\cite{b5} proposed are based on the Rényi divergence to measure the privacy loss as shown in $(2)$ and $(3)$. Rényi differential privacy allows more accurate numerical analysis for specific task, and it provides a relaxed guarantee while in zero-concentrated differential privacy, the probability of the situation that the outputs of the randomization algorithm are the same is quite much higher than others.
+\begin{equation}
+    D_{\alpha}(M(D)||M(D')) \leq \epsilon,
+\end{equation}
+\begin{equation}
+    D_{\alpha}(M(D)||M(D')) \leq \xi + \rho \alpha,
+\end{equation}
+\subsection{Differential Privacy with Generative work}
+The differential privacy is combined with GAN in most work.
+PATE\cite{b6} is a general machine learning strategy providing the differential privacy guarantee used in GAN training with classification task where the privacy dataset is divided into several subdataset for training several teacher models and then the predict of them with Gauss noise addition is used to train the student models and PATE-G is the first successful model used PATE by modifying the discriminator of GAN that only student is discriminator while teachers are regarded as an extra parts to improve the student. A new mechanism\cite{b7} expands the framework of PATE with the proposal of the Confident-GNMax Aggregator and the Interactive-GNMax Aggregator based on Gaussian noise with an accompanying privacy analysis in the Rényi differential privacy for teacher models so that less noise will be appended. While DPKD\cite{b8} is also an extension work of PATE that performs knowledge distillation on teacher models to compute the component probability for prediction where noise is added before aggregation instead. PATE-GAN\cite{b9} modifies the basic PATE framework that the student is trained
+only with the teacher-labelled generated data resulting in the tight differential privacy guarantees and G-PATE\cite{b10} specially treats the generator as the student and the discriminators as the teacher with the proposal of new aggregation combining the Confident-GNMax Aggregator and random projection and gradient discretization. The are another group of GAN keep the differential privacy by adding noise to gradients when updating models with the Wasserstein distance as measurement such as an approach\cite{b11} applying DP-SGD in training GAN to provide privacy protection for time aware continuous or discrete data, GANobfuscator\cite{b12} mitigate information leakage by applying a combination of carefully designed noise and gradient pruning twice to bound the privacy sensitivity and gradient when training the discriminator. Taking the usage of CGAN, DP-CGAN\cite{b13}, GAN-DP\cite{b14} and another method\cite{b15} all introduce the third component to achieve the differential privacy that DP-CGAN generates specific fake data with extra conditions provided which is based on a new clipping and perturbation strategy and takes RDP accountant based on the Rényi differential privacy to follow the comsumed privacy budge, another method applies the differential privacy to Triple-GAN where a role of classifier is introduced to highlight conditional generation which plays a role of differential privacy identifier and GAN-DP is also
+based on the CGAN where two confrontations are gaming simultaneously: the game between the generator producing random noise injected into the raw data later to achieve the differential privacy and the discriminator and the game between the differential privacy identifier identifying if synthetic data complying with differential privacy and the discriminator distinguish the synthetic data. GS-WGAN\cite{b16} sanitizes the gradients for updating generator by selectively applying the sanitization mechanism only to the corresponding subset of parameters to distort gradient information more precisely and modifies clipping gradients bound.
+
+Compared with GAN, the privacy preserving works based on VAE combined with the differential privacy are much fewer and relatively new. A soution\cite{b17} s proposed to tackle anonymization of textual
+data by the proposal of end-to-end differential private VAE
+where it is noted that the encoder and the decoder here are both
+models based on RNN and GRUs by perturbing the latent vectors that provides a global summary of the input texts that the probabilistic encoder is constrained to facilitate differential private latent sampling by using a continuous mean bound in the latent space. VAE is also used as a tool to build the recommendation system and here DP-SGD also plays a role to provide the guarantee of the differential privacy\cite{b18} that the user-specified noise sampled from the Gauss Mechanism is added into the mean–variance pairs which are used to estimate them for differential privacy protection and then DP-SGD is used when training the model with a optimal clipping bound which is obtained by a proposed recursive algorithm. GP-GM\cite{b19} performs first a differential privacy clustering algorithm combining kernel k-means with random Fourier features to transform the data into low-
+dimensional representations and to generate the noisy cluster centers with different Gaussian noise to perform the differential privacy and then each cluster is given to separate VAEs, they are trained with DP-SGD improved with an adaptive selection of clipping threshold which leads to a less noise used to perturb the gradient updates to privacy protection. P3GM\cite{b20} divides the training of VAE into two phrases that are training the encoder where PCA is first applied on the data to do dimension reduction for the simplification during which noise following the Wishart mechanism is added here too to the covariance matrix to keep privacy preserving and the differential privacy version of EM-algorithm is applied later to to obtain the estimation the distribution of the latent variable to approximate the prior
+distribution of real data, as well as training the decoder with the fixed encoder using a technique of Monte Carlo estimate to approximate the log-liklihood of posterior distribution with DP-SGD and this increases the robustness against the noise for differential privacy protection.
+
+It can be seen that VAE combined with the differential privacy techniques might be useful in many scenes and compared it with GAN, there is a large space for developing privacy preserving with VAE waiting for exploration.
+
+\section{Our approach}
+
+
+
+\section{Experiment}
+
+\section{Conclusion}
+
+
+\begin{thebibliography}{00}
+\bibitem{b1} Sangeetha S. and Sudha Sadasivam G., Privacy of big data: a review, Handbook of big data and iot security, 5-23, 2019.
+\bibitem{b2} Dwork C. and Roth A., The algorithmic foundations of differential privacy, Foundations and Trends® in Theoretical Computer Science, 9(3–4), 211-407, 2014
+\bibitem{b3} Abadi M., Chu A., Goodfellow I., McMahan H. B., Mironov I., Talwar K., and Zhang L., Deep learning with differential privacy. In Proceedings of the 2016 ACM SIGSAC conference on computer and communications security, pp. 308-318, 2016.
+\bibitem{b4} Mironov I., Rényi differential privacy, In 2017 IEEE 30th computer security foundations symposium (CSF), pp. 263-275, 2017.
+\bibitem{b5} Bun M. and Steinke T., Concentrated differential privacy: Simplifications, extensions, and lower bounds. In Theory of Cryptography Conference, pp. 635-658. Springer, Berlin, Heidelberg, 2016.
+\bibitem{b6} Papernot N., Abadi M., Erlingsson U., Goodfellow I. and Talwar K., Semi-supervised Knowledge Transfer for Deep Learning from Private Training Data, 5th International Conference on Learning Representations(ICLR 2017) - Conference Track Proceedings, 2017.
+\bibitem{b7} Papernot N., Song S., Mironov I., Raghunathan A., Talwar K., and Erlingsson Ú., Scalable Private Learning with PATE, 6th International Conference on Learning Representations(ICLR 2018) - Conference Track Proceedings, 2018.
+\bibitem{b8} Lyu L., and Chen C. H., Differentially private knowledge distillation for mobile analytics. In Proceedings of the 43rd International ACM SIGIR Conference on Research and Development in Information Retrieval, pp. 1809-1812, 2020. 
+\bibitem{b9} Jordon J., Yoon J. and Van Der Schaar, M., PATE-GAN: Generating synthetic data with differential privacy guarantees, In International conference on learning representations, 2018.
+\bibitem{b10} Long Y., Wang B., Yang Z., Kailkhura B., Zhang A., Gunter C. and Li B., G-PATE: Scalable Differentially Private Data Generator via Private Aggregation of Teacher Discriminators, Advances in Neural Information Processing Systems, 34, 2965-2977, 2021.
+\bibitem{b11} Frigerio L., Oliveira A. S. D., Gomez L., and Duverger P., Differentially private generative adversarial networks for time series, continuous, and discrete open data, In IFIP International Conference on ICT Systems Security and Privacy Protection, pp. 151-164, Springer, Cham, 2019.
+\bibitem{b12} Xu C., Ren J., Zhang D., Zhang Y., Qin Z., and Ren, K., GANobfuscator: Mitigating information leakage under GAN via differential privacy, IEEE Transactions on Information Forensics and Security, 14(9), 2358-2371, 2019.
+\bibitem{b13} Torkzadehmahani R., Kairouz P. and Paten B., Dp-cgan: Differentially private synthetic data and label generation, In Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition Workshops (pp. 0-0), 2019.
+\bibitem{b14} Qu Y., Yu S., Zhang J., Binh H. T. T., Gao L., and Zhou W., GAN-DP: Generative adversarial net driven differentially privacy-preserving big data publishing, In ICC 2019-2019 IEEE International Conference on Communications (ICC), pp. 1-6, 2019.
+\bibitem{b15} Ho S., Qu Y., Gao L., Li J., and Xiang Y., Generative adversarial nets enhanced continual data release using differential privacy, In International Conference on Algorithms and Architectures for Parallel Processing, pp. 418-426, Springer, Cham, 2020.
+\bibitem{b16} Chen D., Orekondy T., and Fritz M., Gs-wgan: A gradient-sanitized approach for learning differentially private generators, Advances in Neural Information Processing Systems, 33, 12673-12684, 2020.
+\bibitem{b17} Weggenmann B., Rublack V., Andrejczuk M., Mattern J. and Kerschbaum F., Dp-vae: Human-readable text anonymization for online reviews with differentially private variational autoencoders. In Proceedings of the ACM Web Conference 2022, pp. 721-731, 2022.
+\bibitem{b18} Fang L., Du B. and Wu C., Differentially private recommender system with variational autoencoders, Knowledge-Based Systems, 109044, 2022.
+\bibitem{b19} Acs G., Melis L., Castelluccia C. and De Cristofaro E., Differentially private mixture of generative neural networks, IEEE Transactions on Knowledge and Data Engineering, 31(6), 1109-1121, 2018.
+\bibitem{b20} Takagi S., Takahashi T., Cao Y. and Yoshikawa M., P3gm: Private high-dimensional data release via privacy preserving phased generative model. In 2021 IEEE 37th International Conference on Data Engineering (ICDE), pp. 169-180, 2021.
+
+\end{thebibliography}
+
+\end{document}
